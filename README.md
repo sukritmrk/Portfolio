@@ -3,7 +3,7 @@
 
 # Modern Windows Loader PoC Research
 
-โครงการนี้เป็นโครงการวิจัยเชิงรุก (Offensive Security Research) ที่มุ่งเน้นการพัฒนา Loader บนระบบปฏิบัติการ Windows โดยใช้เทคนิค Evasion ขั้นสูง เพื่อศึกษาการทำงานของ Endpoint Detection and Response / Antivirus และกลไกการตรวจจับในระดับ Kernel-mode และ User-mode
+โครงการนี้เป็นโครงการวิจัย Offensive Security ที่มุ่งเน้นการพัฒนา Loader บนระบบปฏิบัติการ Windows โดยใช้เทคนิค Evasion ขั้นสูง เพื่อศึกษาการทำงานของ Endpoint Detection and Response / Antivirus และกลไกการตรวจจับในระดับ Kernel-mode และ User-mode
 
 โปรเจกต์นี้เขียนขึ้นด้วยภาษา **C++** และ **x64 Assembly** โดยเน้นความเข้าใจในระดับ Windows Internals โดยได้มีการ Implement เทคนิคที่ใช้ในการทำ Red Teaming และ Malware Development ระดับสากล ดังนี้ต่อไปนี้
 
