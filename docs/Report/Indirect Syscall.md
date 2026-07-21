@@ -348,7 +348,7 @@ Wrapper ตัวนี้เป็นด่านจัดระเบียบ
 
 ภาพ: การใช้ฟังก์ชัน `WaitForSingleObject` และ `CloseHandle`
 
-#### **การ Synchronization และคืนทรัพยากรระดับ Kernel
+#### การ Synchronization และคืนทรัพยากรระดับ Kernel
 
    - **`WaitForSingleObject(hThread, 10);` (The Execution Window)** สั่ง Main Thread ให้หยุดรอเพื่อให้ Thread ของ Payload ได้เริ่มทำงาน ตามปกติแล้ว Shellcode ที่มีความซับซ้อนเช่น C2 Agent หรือ Ransomware จะตั้งเวลารอไว้นานกว่านี้ (อาจถึงหลักวินาที) แต่เพราะ PoC นี้ใช้แค่ Shellcode เครื่องคิดเลขตรวจสอบ จึงตั้งเวลาไว้แค่ 10 Millisecond พอ
 
