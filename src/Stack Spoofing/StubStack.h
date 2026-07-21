@@ -252,7 +252,7 @@ extern "C" __attribute__((naked)) NTSTATUS NtCreate(
 		ReturnHere :
 
 		mov rbx, [rsp + 0x70]  
-			add rsp, 0x78		   
-			ret
+		add rsp, 0x78		   
+		ret
 	}
 }

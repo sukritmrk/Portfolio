@@ -53,7 +53,7 @@ DWORD getHalosGateSSN(ULONG_PTR uiNtDllAddr, EXPORT_TABLES ntdllExports, PIMAGE_
 DWORD getTartarusGateSSN(ULONG_PTR NtDllAddr, EXPORT_TABLES ntdllExports, PIMAGE_NT_HEADERS64 pNtHeader, const char* FuncName);
 DWORD getFreshyCallSSN(ULONG_PTR NtDllAddr, EXPORT_TABLES ntdllExports, const char* FuncName);
 
-// --- Assembly Gates ---
+// --- Stub Assembly ---
 
 extern "C" NTSTATUS NtAlloc(DWORD dwSSN, ULONG_PTR pGadget, ...);
 extern "C" NTSTATUS NtWrite(DWORD dwSSN, ULONG_PTR pGadget, ...);

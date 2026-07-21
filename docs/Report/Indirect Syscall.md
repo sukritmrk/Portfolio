@@ -317,7 +317,7 @@
     - `jmp r11`  แทนที่เราจะพิมพ์คำสั่ง `syscall` ในโค้ดของเราแบบ `Direct Syscall` เราสั่งให้ CPU **"กระโดด"** ไปรันคำสั่ง `syscall; ret` ที่อยู่ใน `ntdll.dll` จริงๆ นี้คือที่มาของชื่อ `Indirect Syscall`
 
 #### 4. Wrapper Function
-Wrapper ตัวนี้เป็นด่านจัดระเบียบข้อมูลก่อนลงลึกสู่ Assembly เพื่อรับประกัน **ความเร็วและความปลอดภัยใน System Memory** มีหัวใจสำคัญดังนี้
+Wrapper ตัวนี้เป็นด่านจัดระเบียบข้อมูลก่อนโยนไปทำงานด้วย Assembly Stub
 
 ![](../Images/Pasted%20image%2020260330001845.png)
 
@@ -353,6 +353,5 @@ Wrapper ตัวนี้เป็นด่านจัดระเบียบ
    - **`WaitForSingleObject(hThread, 10);` (The Execution Window)** สั่ง Main Thread ให้หยุดรอเพื่อให้ Thread ของ Payload ได้เริ่มทำงาน ตามปกติแล้ว Shellcode ที่มีความซับซ้อนเช่น C2 Agent หรือ Ransomware จะตั้งเวลารอไว้นานกว่านี้ (อาจถึงหลักวินาที) แต่เพราะ PoC นี้ใช้แค่ Shellcode เครื่องคิดเลขตรวจสอบ จึงตั้งเวลาไว้แค่ 10 Millisecond พอ
 
    - **`CloseHandle(hThread);`** เพื่อของความปลอดภัยของ System Memory ทันทีที่ Thread จบหน้าที่แล้ว การเรียกปิด Handle คือการตัดขาดการเชื่อมต่อระหว่าง Main Process กับ Thread นั้น เพื่อป้องกันปัญหา Handle Leak ตัว Loader จะคืนทรัพยากรให้ OS ทันที และเป็นการลบร่องรอยใน Handle Table ไม่ให้ EDR ใช้แกะรอยย้อนกลับได้
-
 ### อ่านผลการทดสอบได้ที่นี่
 ### [Indirect Syscalls Result Tests](Test%20Results/Indirect%20Syscalls%20Result%20Tests.md)
