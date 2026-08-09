@@ -218,7 +218,7 @@ extern "C" __attribute__((naked)) NTSTATUS NtAllocate(
 
 - `mov [rsp + 0x48], rbx` เอาค่า `RBX` ดั้งเดิมของระบบไปฝากไว้ที่ก้นบ่อของ Stack ใหม่ ที่พิกัด 0x48 เพื่อรอคืนค่าตอนจบตามกฎ x64 Convention
 
-**2. ย้ายของ
+**2. ย้ายของ**
 
 - ตามกฎ x64 CPU จะรับพารามิเตอร์ผ่าน Register แค่ 4 ตัวแรก (RCX, RDX, R8, R9) ตัวที่ 5 เป็นต้นไปต้องวางบน Stack
 
