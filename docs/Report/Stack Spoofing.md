@@ -77,7 +77,7 @@ EDR สมัยใหม่ไม่ได้ดักจับแค่ตอ�
 ##### 1. Find Gadget aka RET 
 ใช้สำหรับการ Return กลับมาหลังจาก execute loader ไปแล้ว เทคนิคที่นิยมมากคือ Trampoline หรือ Gadget ประเภท `JMP [Register]` หรือ `CALL [Register]` ใน `ntdll.dll` เพื่อปลอมแปลง Workflow ของกระบวนการทั้งหมด โดย DLL ที่ยอดนิยมและแนบเนียนได้แก่ kernel32.dll และ ntdll.dll เพราะเป็น DLL หลักที่ทุก Process ใช้งานทำให้ไม่น่าสงสัย
 
-**อะไรคือ Trampoline? อ่านต่อได้ใน [_Trampoline Definition](_Trampoline%20Definition.md)
+**อะไรคือ Trampoline? อ่านต่อได้ใน [_Trampoline Definition](_Trampoline%20Definition.md)**
 
 ##### 2. Contain original DLL content
 กวาด RSP และ Register ที่เกี่ยวข้องทั้งหมดที่ชี้มายัง Stack ปัจจุบัน แล้วนำมาเก็บไว้ใน Register Temp เพื่อที่หลักจากปลอมแปลง Stack และ Execute แล้ว จะได้นำ Stack เดิมมาคืนค่าเพื่อสร้างร่องรอยปลอม
